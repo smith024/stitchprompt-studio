@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StitchPrompt Studio</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Inter font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .fade-in { animation: fadeIn 0.3s ease-in-out forwards; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100 h-full flex flex-col selection:bg-indigo-500 selection:text-white">
+
+  <header class="border-b border-zinc-800/80 bg-zinc-900/50 backdrop-blur-md sticky top-0 z-30 px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-600/30">S</div>
+      <div>
+        <h1 class="font-semibold text-sm tracking-wide text-zinc-100">StitchPrompt Studio</h1>
+        <p class="text-xs text-zinc-400">Design Prompt Engineering for Google Stitch</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        Ready
+      </span>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-4xl w-full mx-auto p-6 md:p-8 flex flex-col gap-8 overflow-y-auto">
+
+    <!-- Hero / Input Section -->
+    <section class="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-6 shadow-xl flex flex-col gap-5">
+      <div class="flex flex-col gap-1">
+        <h2 class="text-lg font-medium text-zinc-200">Raw Project Brief or Concept</h2>
+        <p class="text-xs text-zinc-400">Paste your rough concept, feature list, or upload a text file. We'll synthesize structured briefs and high-impact design prompts.</p>
+      </div>
+
+      <!-- Dropzone & Textarea -->
+      <div id="dropzone" class="border-2 border-dashed border-zinc-700/60 hover:border-indigo-500/60 transition-colors rounded-xl p-4 bg-zinc-950/40 flex flex-col gap-3 relative">
+        <textarea id="content-input" rows="5" class="w-full bg-transparent text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none resize-y" placeholder="e.g. An iOS app that helps freelance photographers track mileage, tag receipts via OCR, and generate tax-ready expense reports with minimal taps..."></textarea>
+        
+        <div class="flex items-center justify-between pt-2 border-t border-zinc-800/60 text-xs text-zinc-400">
+          <label class="cursor-pointer inline-flex items-center gap-2 hover:text-zinc-200 transition-colors bg-zinc-800/60 px-3 py-1.5 rounded-lg border border-zinc-700/50">
+            <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+            <span id="file-label-text">Upload TXT/MD file</span>
+            <input type="file" id="file-input" class="hidden" accept=".txt,.md,.json,.csv">
+          </label>
+          <button id="generate-btn" class="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-medium text-xs shadow-lg shadow-indigo-600/25 transition-all">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            Generate Prompts
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Status Line (Fix 1: hides when results render) -->
+    <div id="status-line" class="hidden items-center gap-3 px-4 py-3 rounded-xl bg-indigo-950/30 border border-indigo-800/30 text-indigo-300 text-xs animate-pulse">
+      <svg class="w-4 h-4 animate-spin text-indigo-400" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+      <span id="status-text">Analyzing concept and structuring design brief...</span>
+    </div>
+
+    <div id="results-container" class="hidden flex flex-col gap-8 fade-in">
+
+      <!-- Structured Brief Section -->
+      <section class="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-6 shadow-xl flex flex-col gap-5">
+        <div class="flex items-center justify-between border-b border-zinc-800 pb-4">
+          <div class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+            <h3 class="text-sm font-semibold text-zinc-200 tracking-wide uppercase">Structured Design Brief</h3>
+          </div>
+          <span class="text-xs text-zinc-500">Editable fields below</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-medium text-zinc-400">Product Name</label>
+            <input type="text" id="brief-productName" class="bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-indigo-500">
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-medium text-zinc-400">Platform</label>
+            <input type="text" id="brief-platform" class="bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-indigo-500">
+          </div>
+          <div class="md:col-span-2 flex flex-col gap-1.5">
+            <label class="text-xs font-medium text-zinc-400">One-Liner</label>
+            <input type="text" id="brief-oneLiner" class="bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-indigo-500">
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-medium text-zinc-400">Target Audience</label>
+            <input type="text" id="brief-targetAudience" class="bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-indigo-500">
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-medium text-zinc-400">Tone & Aesthetic</label>
+            <input type="text" id="brief-tone" class="bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-indigo-500">
+          </div>
+          <div class="md:col-span-2 flex flex-col gap-1.5">
+            <label class="text-xs font-medium text-zinc-400">Key Screens (comma separated)</label>
+            <input type="text" id="brief-screens" class="bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-indigo-500">
+          </div>
+        </div>
+      </section>
+
+      <!-- Prompt Cards Section -->
+      <section class="flex flex-col gap-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+            <h3 class="text-sm font-semibold text-zinc-200 tracking-wide uppercase">Generated Stitch Prompts</h3>
+          </div>
+          <span class="text-xs text-zinc-500">3 Curated Design Angles</span>
+        </div>
+
+        <div id="prompts-grid" class="grid grid-cols-1 gap-6">
+          <!-- Prompt cards injected dynamically -->
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <script>
+    let currentData = null;
+    let debounceTimer = null;
+
+    const contentInput = document.getElementById('content-input');
+    const fileInput = document.getElementById('file-input');
+    const fileLabelText = document.getElementById('file-label-text');
+    const generateBtn = document.getElementById('generate-btn');
+    const statusLine = document.getElementById('status-line');
+    const statusText = document.getElementById('status-text');
+    const resultsContainer = document.getElementById('results-container');
+
+    // File Drop & Read Handler
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      fileLabelText.textContent = file.name;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        contentInput.value = event.target.result;
+      };
+      reader.onerror = () => {
+        contentInput.value = `Uploaded file: ${file.name}`;
+      };
+      if (file.type.includes('text') || file.name.endsWith('.md') || file.name.endsWith('.txt') || file.name.endsWith('.json') || file.name.endsWith('.csv')) {
+        reader.readAsText(file);
+      } else {
+        contentInput.value = `File attached: ${file.name} (${Math.round(file.size / 1024)} KB)`;
+      }
+    });
+
+    // Mock Fallback Generator
+    function mockAnalyze(content) {
+      const isApp = content.toLowerCase().includes('web') ? false : true;
+      const platformStr = isApp ? "App" : "Web";
+      const cleanName = content.slice(0, 30).trim().replace(/[^a-zA-Z0-9 ]/g, '') || "StitchApp";
+      const formattedName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
+
+      return {
+        brief: {
+          productName: formattedName,
+          oneLiner: `Design an app for streamlined modern workflows and effortless user interactions.`,
+          targetAudience: "Digital professionals and creators",
+          platform: platformStr,
+          tone: "Clean, professional, and accessible",
+          screens: ["Dashboard", "Detail View", "Settings"]
+        },
+        prompts: [
+          {
+            angle: "Functional / Minimal",
+            platform: platformStr,
+            promptText: `Design a high-utility ${platformStr.toLowerCase()} focused on speed and clarity. Incorporate high-contrast monochrome containers, clear typography hierarchy using Inter, compact data cards, and instant feedback micro-interactions. Zero decorative clutter.`
+          },
+          {
+            angle: "Bold / Expressive",
+            platform: platformStr,
+            promptText: `Create an energetic and immersive ${platformStr.toLowerCase()} layout featuring rich gradient accents, large expressive headings, floating glassmorphism navigation bars, and delightful spring physics animations on interactive elements.`
+          },
+          {
+            angle: "Journey-centric",
+            platform: platformStr,
+            promptText: `Craft a guided step-by-step onboarding and core workflow for this ${platformStr.toLowerCase()}. Emphasize contextual hints, progress indicators, generous whitespace, and a warm editorial color palette that encourages daily engagement.`
+          }
+        ]
+      };
+    }
+
+    // Real API call with fallback
+    async function analyzeWithGemini(content) {
+      try {
+        const r = await fetch("/api/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content })
+        });
+        if (!r.ok) throw new Error("API " + r.status);
+        return await r.json();
+      } catch (e) {
+        console.warn("Fallback to mock:", e);
+        return mockAnalyze(content);
+      }
+    }
+
+    // Render UI from data
+    function renderResults(data) {
+      currentData = data;
+      const brief = data.brief || {};
+
+      document.getElementById('brief-productName').value = brief.productName || '';
+      document.getElementById('brief-platform').value = brief.platform || 'App';
+      document.getElementById('brief-oneLiner').value = brief.oneLiner || '';
+      document.getElementById('brief-targetAudience').value = brief.targetAudience || '';
+      document.getElementById('brief-tone').value = brief.tone || '';
+      document.getElementById('brief-screens').value = Array.isArray(brief.screens) ? brief.screens.join(', ') : '';
+
+      const promptsGrid = document.getElementById('prompts-grid');
+      promptsGrid.innerHTML = '';
+
+      const prompts = data.prompts || [];
+      prompts.forEach((p, idx) => {
+        const card = document.createElement('div');
+        card.className = 'bg-zinc-900/60 border border-zinc-800 rounded-2xl p-6 shadow-xl flex flex-col gap-4 relative group hover:border-zinc-700 transition-all';
+        card.innerHTML = `
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">${p.angle}</span>
+              <span class="text-xs text-zinc-500">${p.platform}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="copyPrompt(${idx})" class="copy-btn-${idx} inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-medium transition-colors border border-zinc-700/50">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                Copy
+              </button>
+              <a href="https://stitch.google.com" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition-colors shadow-md shadow-indigo-600/20">
+                Open Stitch
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+              </a>
+            </div>
+          </div>
+          <div class="bg-zinc-950/70 border border-zinc-800/80 rounded-xl p-4 text-sm text-zinc-300 font-mono leading-relaxed select-all">
+            ${escapeHtml(p.promptText)}
+          </div>
+        `;
+        promptsGrid.appendChild(card);
+      });
+
+      // FIX 1: Hide status line when results render
+      statusLine.classList.add('hidden');
+      resultsContainer.classList.remove('hidden');
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    window.copyPrompt = function(idx) {
+      if (!currentData || !currentData.prompts[idx]) return;
+      const text = currentData.prompts[idx].promptText;
+      const btn = document.querySelector(`.copy-btn-${idx}`);
+      
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.style.position = "fixed";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = `<svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Copied!`;
+        setTimeout(() => { btn.innerHTML = originalText; }, 2000);
+      } catch (err) {
+        console.warn('Fallback copy failed', err);
+      }
+      document.body.removeChild(textArea);
+    };
+
+    // Debounced re-render on brief edit
+    function handleBriefEdit() {
+      if (!currentData) return;
+      currentData.brief.productName = document.getElementById('brief-productName').value;
+      currentData.brief.platform = document.getElementById('brief-platform').value;
+      currentData.brief.oneLiner = document.getElementById('brief-oneLiner').value;
+      currentData.brief.targetAudience = document.getElementById('brief-targetAudience').value;
+      currentData.brief.tone = document.getElementById('brief-tone').value;
+      currentData.brief.screens = document.getElementById('brief-screens').value.split(',').map(s => s.trim()).filter(Boolean);
+    }
+
+    ['brief-productName', 'brief-platform', 'brief-oneLiner', 'brief-targetAudience', 'brief-tone', 'brief-screens'].forEach(id => {
+      document.getElementById(id).addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(handleBriefEdit, 400);
+      });
+    });
+
+    // Trigger Generation
+    async function runGeneration() {
+      const content = contentInput.value.trim();
+      if (!content) {
+        contentInput.focus();
+        return;
+      }
+
+      generateBtn.disabled = true;
+      generateBtn.classList.add('opacity-70');
+      statusLine.classList.remove('hidden');
+      statusLine.classList.add('flex');
+      resultsContainer.classList.add('hidden');
+      statusText.textContent = "Analyzing concept and structuring design brief...";
+
+      const data = await analyzeWithGemini(content);
+      renderResults(data);
+
+      generateBtn.disabled = false;
+      generateBtn.classList.remove('opacity-70');
+    }
+
+    generateBtn.addEventListener('click', runGeneration);
+
+    // Auto-run sample on load for instant preview
+    window.addEventListener('DOMContentLoaded', () => {
+      if (!contentInput.value.trim()) {
+        contentInput.value = "An iOS app that helps freelance photographers track mileage, tag receipts via OCR, and generate tax-ready expense reports.";
+      }
+      runGeneration();
+    });
+  </script>
+</body>
+</html>
